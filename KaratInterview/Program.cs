@@ -56,8 +56,6 @@ using System.Linq;
 
 class Solution
 {
-    private static object currentCordiante;
-
     static void Main(String[] args)
     {
 
@@ -71,25 +69,33 @@ class Solution
             new []{'k', 'a', 'i', 'o', 'k', 'i'},
         };
 
-        string word0 = "cctib";
-        string word1 = "catnip";
-        string word2 = "cccc";
-        string word3 = "s";
-        string word4 = "bit";
-        string word5 = "aoi";
-        string word6 = "ki";
-        string word7 = "aaoo";
-        string word8 = "ooo";
+        var wordList = new List<string>() { "catnip", "cccc", "s", "bit", "aoi", "ki", "aaoo", "ooo" };
 
-        var coordList = FindCordinates(grid1, word0);
-        foreach ( var coord in coordList)
+        foreach ( var word in wordList)
         {
-            Console.Write($"({coord[0]},{coord[1]})");
+            Console.WriteLine(word);
+            var coordList = FindCordinates(grid1, word);
+            foreach (var coord in coordList)
+            {
+                Console.Write($"({coord[0]},{coord[1]})");
+            }
+            Console.WriteLine();
+
         }
 
+        // Second Grid
+        Console.WriteLine("Second Grid");
 
         char[][] grid2 = new[] { new[] { 'a' } };
         string word9 = "a";
+        var coordList2 = FindCordinates(grid2, word9);
+        foreach (var coord in coordList2)
+        {
+            Console.WriteLine(word9);
+            Console.Write($"({coord[0]},{coord[1]})");
+            Console.WriteLine();
+        }
+
 
     }
     /*
@@ -105,60 +111,46 @@ class Solution
                 // Check if position matches first word
                 if ( grid[i][j] == word[0])
                 {
-                    var coordList = DeepSearch(grid, new int[] { i, j }, word);
-                    if (coordList.Length > 0)
-                        return coordList;
+                    var tmpCoordList = new List<int[]>();
+                    var finalCoordList = new List<int[]>();
+                    DeepSearch(grid, new int[] { i, j }, word, ref tmpCoordList, ref finalCoordList);
+                    if (finalCoordList.Count > 0)
+                        return finalCoordList.ToArray();
                 }
             }
         }
 
         return new int[0][];
     }
-    static int[][] DeepSearch(char[][] grid, int[] coord1, string word1)
+    static void DeepSearch(char[][] grid, int[] coord, string word, ref List<int[]> tempCoordList, ref List<int[]> finalCoordList)
     {
-        // Stack
-        var st = new Stack<(int[],string)>();
-        st.Push((coord1, word1));
+        // Add coord to list
+        tempCoordList.Add(coord);
 
-        int[] coord2;
-        string word2;
-
-        var coordList = new List<int[]>();
-
-        while ( st.Any() )
+        // Check if word hasn't ended
+        if ( word.Length > 1)
         {
-            var tuple = st.Pop();
-            coord2 = tuple.Item1;
-            word2 = tuple.Item2;
-
-            coordList.Add(coord2);
-
-            // Check if given word matches current position
-            if (word2[0] == grid[coord2[0]][coord2[1]])
+            // Check if we havent reached last column, and then if char to the right matches
+            if (coord[1] < grid[0].Length-1 && grid[coord[0]][coord[1] + 1] == word[1])
             {
-                // Check if word hasn't ended
-                if ( word2.Length > 1)
-                {
-                    // Check if we havent reached last column, and then if char to the right matches
-                    if (coord2[1] < grid[0].Length-1 && grid[coord2[0]][coord2[1] + 1] == word2[1])
-                    {
-                        st.Push((new int[] { coord2[0], coord2[1] + 1 }, word2.Substring(1)));
-                    }
-                    // Check if we havent reached last row, and then if char to the bottom matches
-                    if (coord2[0] < grid.Length-1 && grid[coord2[0] + 1][coord2[1]] == word2[1])
-                    {
-                        st.Push((new int[] { coord2[0]+1, coord2[1] }, word2.Substring(1)));
-                    }
-                }
-                // reached end of word!
-                else
-                {
-                    return coordList.ToArray();
-                }
+                DeepSearch( grid, new int[] { coord[0], coord[1] + 1 }, word.Substring(1), ref tempCoordList, ref finalCoordList);
+            }
+            // Check if we havent reached last row, and then if char to the bottom matches
+            if (coord[0] < grid.Length-1 && grid[coord[0] + 1][coord[1]] == word[1])
+            {
+                DeepSearch(grid, new int[] { coord[0]+1, coord[1] }, word.Substring(1), ref tempCoordList, ref finalCoordList);
             }
         }
+        // Word has ended, return full list
+        else
+        {
+            // clone tmpCoordList to finalCoordList
+            finalCoordList = new List<int[]>(tempCoordList);
+        }
 
-        return new int[0][];
+        // Remove (last) coord from list
+        tempCoordList.RemoveAt(tempCoordList.Count-1);
+
     }
 
     static string? FindWord(string[] words, string s1)
